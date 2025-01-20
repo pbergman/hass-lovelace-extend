@@ -1,0 +1,13 @@
+{
+  "domain": "lovelace_extend",
+  "name": "Lovelace Extend",
+  "after_dependencies": ["lovelace", "template"],
+  "documentation": "https://github.com/pbergman/hass-lovelace-extend/README.md",
+  "dependencies": ["lovelace", "template", "homeassistant"],
+  "single_config_entry": true,
+  "version": "0.0.3",
+  "config_flow": true,
+  "integration_type": "hub",
+  "issue_tracker": "https://github.com/pbergman/hass-lovelace-extend/issues",
+  "codeowners": ["@pbergman"]
+}
