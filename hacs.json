@@ -1,4 +1,5 @@
 {
-  "name": "lovelace_extend",
-  "homeassistant": "2024.12.5"
+  "name": "Lovelace Extend",
+  "homeassistant": "2024.12.5",
+  "render_readme": true
 }
