@@ -29,9 +29,7 @@ class Path:
             if self._path_fmt is None:
                 self._path_fmt = self._path[-1] + "[{idx:n}]"
 
-            if paths[:-1] == self._path:
-                paths = paths[:-1]
-
+            paths = paths[:-1]
             paths.append(self._path_fmt.format(idx=x))
         else:
 
