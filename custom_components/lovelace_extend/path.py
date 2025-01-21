@@ -25,8 +25,12 @@ class Path:
         paths = copy(self._path)
 
         if isinstance(x, int):
+
             if self._path_fmt is None:
                 self._path_fmt = self._path[-1] + "[{idx:n}]"
+
+            if paths[:-1] == self._path:
+                paths = paths[:-1]
 
             paths.append(self._path_fmt.format(idx=x))
         else:
@@ -36,7 +40,7 @@ class Path:
 
             paths.append(x)
 
-        return Path(self._type, x, self._voter)
+        return Path(self._type, paths, self._voter)
 
     def get_excluded(self) -> int|None:
         return self._voter.is_excluded(self._type, str(self)) if self._voter is not None else None

@@ -1,4 +1,3 @@
-
 from .const import LOGGER, DOMAIN
 from .dashboard import LovelaceWrapper
 from homeassistant.components.lovelace import _register_panel
@@ -45,8 +44,8 @@ async def async_synchronize_dashboards(hass: HomeAssistant, entry: ConfigEntry|N
                 item = hass.data[LOVELACE_DOMAIN]['dashboards'].get(dashboard, None)
                 if isinstance(item, LovelaceWrapper) and item is not None:
                     LOGGER.info("reverting dashboard \"%s\" to original config", dashboard)
-                    hass.data[LOVELACE_DOMAIN]['dashboards'][dashboard] = item.unwrap()
-                    if item.inner.mode != MODE_YAML:
+                    hass.data[LOVELACE_DOMAIN]['dashboards'][dashboard] = await item.unwrap()
+                    if hass.data[LOVELACE_DOMAIN]['dashboards'][dashboard].mode != MODE_YAML:
                         await register_panel(hass, hass.data[LOVELACE_DOMAIN]['dashboards'][dashboard])
                 elif item is None:
                     LOGGER.info("dashboard %s seems to be removed from lovelace collection")
@@ -62,7 +61,7 @@ async def async_synchronize_dashboards(hass: HomeAssistant, entry: ConfigEntry|N
                     hass.data[LOVELACE_DOMAIN]['dashboards'][dashboard] = LovelaceWrapper(hass, inner)
                     # update panel to yaml, so we disable the edit mode and can refresh/rebuild from gui
                     if inner.mode != MODE_YAML:
-                        await register_panel(hass, hass.data[LOVELACE_DOMAIN]['dashboards'][dashboard])
+                        await register_panel(hass, hass.data[LOVELACE_DOMAIN]['dashboards'][dashboard], MODE_YAML)
                 elif inner is None:
                     del entry.data['dashboards'][dashboard]
                     LOGGER.info("dashboard %s seems to be removed from lovelace collection")
@@ -72,5 +71,5 @@ async def async_synchronize_dashboards(hass: HomeAssistant, entry: ConfigEntry|N
     hass.data[DOMAIN] = entry.data if entry is not None else {}
 
 
-async def register_panel(hass: HomeAssistant, conf: LovelaceConfig) -> None:
-    _register_panel(hass, conf.url_path, MODE_YAML, conf.config, True)
+async def register_panel(hass: HomeAssistant, conf: LovelaceConfig, mode: str|None = None) -> None:
+    _register_panel(hass, conf.url_path, (mode if mode is not None else conf.mode), conf.config, True)

@@ -1,14 +1,34 @@
 # Lovelace Extend
 
-This custom component for home assistant [lovelace dashboard](https://www.home-assistant.io/dashboards/) will make it possible to use templates everywhere to build a more dynamic dashboard with support for macro`s, inline templates (blocks) and vars.
+This custom component for home assistant [lovelace dashboard](https://www.home-assistant.io/dashboards/) will make it possible to use the internal templating everywhere in the config. So you can create more dynamic dashboard with support for macro`s, inline templates (blocks) and vars in the hope to reduce duplication and create a more manageable dashboard config.
 
-This will work for yaml and storage dashboards but with storage templates you will not be able to edit them until you (temporary) disable the dashboard in the config.   
+It works by reading the selected dashboard, parsing tree and storing the parsed tree simular as the normal dashboard works. For storage dashboards it will be registered as yaml, so we disable live editing (perhaps support in future) and add option to refresh which will reparse the source.     
 
-## Installation instructions
 
-- clone/copy repository to `<your config dir>/custom_components/lovelace_extend/`.
-- enable the lovelace extend in your integrations (settings > devices and services)
-- choice dashboard extend (can also be done later with configuration)
+## Installation
+
+### Manually
+
+- Clone/copy repository to `<your config dir>/custom_components/lovelace_extend/`.
+- Restart Home Assistant
+
+### Hacs
+
+- Click the button below to open this repository in HACS:
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=pbergman&repository=hass-lovelace-extend&category=integration)
+- Click add and then the download button in the bottom right corner.
+- Restart Home Assistant
+
+## Usage
+
+Go to "Devices & services", and click "Add integration", search for `Lovelace Extend` and follow the instructions.
+
+Or click the button below.
+
+[![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=lovelace_extend)
+
+After that it will pop up a form with available dashboards, and you can select the desired dashboard which you like to be parsed/managed.
 
 ## Config
 
@@ -148,4 +168,55 @@ views:
             - sensor.sun_next_rising
             - sensor.sun_next_setting
 
+```
+It is also possible to use a macro as a card template:
+
+```yaml
+lovelace_extend:
+  macros:
+    tile_card:
+      args: entity
+      content: |
+        {% set card = {'type': 'tile', 'entity': entity } %}
+        {% if kwargs|length > 0 %}
+          {% set card = dict(card.items(), **kwargs) %}
+        {% endif %}
+        {{ card }}
+          
+views:
+  - type: sections
+    max_columns: 4
+    title: Color test
+    path: color-test
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Color test
+          - '{{ tile_card("sensor.sun_next_dawn") }}'
+          - '{{ tile_card("sensor.sun_next_dawn", color="primary") }}'
+          - '{{ tile_card("sensor.sun_next_dawn", color="accent") }}'
+```
+
+which will generate a dashboard like
+
+```yaml
+views:
+  - type: sections
+    max_columns: 4
+    title: Color test
+    path: color-test
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Color test
+          - type: tile
+            heading:  "sensor.sun_next_dawn"
+          - type: tile
+            heading:  "sensor.sun_next_dawn"
+            color: "primary"
+          - type: tile
+            heading:  "sensor.sun_next_dawn"
+            color: "accent"
 ```

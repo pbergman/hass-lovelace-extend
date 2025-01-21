@@ -1,5 +1,3 @@
-from pprint import pprint
-
 from .const import LOGGER
 from .dashboard_card import CardPropertyVoter
 from .dashboard_config import DashboardConfig
@@ -14,7 +12,9 @@ from homeassistant.components.lovelace.dashboard import (
     CONFIG_STORAGE_VERSION
 )
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.json import json_bytes, json_fragment
+from jinja2.exceptions import TemplateError
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.template import is_template_string, TemplateEnvironment
 from typing import Any
@@ -45,10 +45,10 @@ class LovelaceWrapper(LovelaceConfig):
     def inner(self) -> LovelaceConfig:
         return self._inner
 
-    def unwrap(self, clear: bool = True) -> LovelaceConfig:
+    async def unwrap(self, clear: bool = True) -> LovelaceConfig:
 
         if clear:
-            self._remove()
+            await self._remove()
 
         return self._inner
 
@@ -131,7 +131,10 @@ def new_template_environment(hass: HomeAssistant, config: DashboardConfig) -> Te
     environment = TemplateEnvironment(hass, False, False, LOGGER.debug)
 
     for name, template in config.get_macros():
-        environment.globals[name] = getattr(environment.from_string(template).module, name)
+        try :
+            environment.globals[name] = getattr(environment.from_string(template).module, name)
+        except TemplateError as err:
+            raise HomeAssistantError(f"Error while parsing macro {name} -> {err.message}")
 
     config.add_sources(environment.loader.sources)
 
@@ -176,16 +179,17 @@ async def parse_card_value(data: Any, root: Path, env: TemplateEnvironment, **kw
                 data[name] = await parse_card_value(value, path, env, **kwargs)
 
     if isinstance(data, list):
-        # check for card children
-        if len(data) > 0 and 'type' in data[0]:
-            return data
-
         for i in range(len(data)):
+            if 'type' in data[i]:
+                continue
             path = root.next(i)
             if not path.is_excluded():
                 data[i] = await parse_card_value(data[i], path, env, **kwargs)
 
     if isinstance(data, str) and is_template_string(data) and not root.is_excluded():
-        return literal_eval(env.from_string(data).render(**kwargs))
+        try:
+            return literal_eval(env.from_string(data).render(**kwargs))
+        except TemplateError as err:
+            raise HomeAssistantError(f"Error while parsing template on {root} -> {err.message}")
 
     return data
