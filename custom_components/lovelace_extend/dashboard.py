@@ -147,7 +147,7 @@ async def parse_card(root: Path, options: dict[str, Any], config: DashboardConfi
 
         vote = root.next(name).get_excluded()
 
-        if vote == CardPropertyVoter.MATCH_TYPE:
+        if CardPropertyVoter.MATCH_PATH_ALL == (CardPropertyVoter.MATCH_PATH_ALL& vote):
             break
 
         if CardPropertyVoter.MATCH_PATH == (CardPropertyVoter.MATCH_PATH & vote):

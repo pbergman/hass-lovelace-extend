@@ -37,6 +37,7 @@ class CardPropertyVoter:
     MATCH_NONE:           Final[int] = 0x00
     MATCH_TYPE:           Final[int] = 0x01
     MATCH_PATH:           Final[int] = 0x02
+    MATCH_PATH_ALL:       Final[int] = 0x04
 
     _type: str
     _matcher: CardPropertyMatcher|None = None
@@ -46,13 +47,13 @@ class CardPropertyVoter:
         self._matcher = matcher
 
     def __str__(self):
-        return f"[{self._type}]{self._matcher}"
+        return f"[{self._type}]{self._matcher}" if self._matcher is not None else f"[{self._type}]"
 
     def _match_type(self, type: str) -> int:
         return self.MATCH_TYPE if self._type == self.MATCH_ALL_TYPES or self._type == type else self.MATCH_NONE
 
     def _match_path(self, path: str) -> int:
-        return self.MATCH_PATH if self._matcher is None or self._matcher.match(path) else self.MATCH_NONE
+        return self.MATCH_PATH_ALL if self._matcher is None or self._matcher.match(path) else self.MATCH_NONE
 
     def match(self, type: str, path: str) -> int:
 
@@ -78,14 +79,31 @@ class CardPropertyVoteHandler:
         return f"[{', '.join(map(lambda card: card.__repr__(), self._voters))}]"
 
     def is_excluded(self, type: str, path: str) -> int:
+        result = CardPropertyVoter.MATCH_NONE
+
         for voter in self._voters:
             if (result := voter.match(type, path)) is not CardPropertyVoter.MATCH_NONE:
-                LOGGER.debug("path [%s].%s ignored by rule \"%s\" (match [%s])", type, path, voter, result_str(result))
+                if CardPropertyVoter.MATCH_PATH_ALL == (CardPropertyVoter.MATCH_PATH_ALL & result):
+                    LOGGER.debug(
+                        "card type [%s] ignored by rule \"%s\" (match [%s])",
+                        type,
+                        path,
+                        voter,
+                        result_str(result)
+                    )
+                else:
+                    LOGGER.debug(
+                        "card path [%s].%s ignored by rule \"%s\" (match [%s])",
+                        type,
+                        path,
+                        voter,
+                        result_str(result)
+                    )
                 return result
 
-        LOGGER.debug("path [%s].%s not excluded (checked %d voters)", type, path, len(self._voters))
+        LOGGER.debug("card path [%s].%s not excluded (checked %d voters)", type, path, len(self._voters))
 
-        return CardPropertyVoter.MATCH_NONE
+        return result
 
 
 def result_str(mode: int) -> str:
