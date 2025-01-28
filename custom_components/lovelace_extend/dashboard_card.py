@@ -53,13 +53,16 @@ class CardPropertyVoter:
         return self.MATCH_TYPE if self._type == self.MATCH_ALL_TYPES or self._type == type else self.MATCH_NONE
 
     def _match_path(self, path: str) -> int:
-        return self.MATCH_PATH_ALL if self._matcher is None or self._matcher.match(path) else self.MATCH_NONE
+        if self._matcher is None:
+            return self.MATCH_PATH_ALL
+
+        return self.MATCH_PATH if self._matcher.match(path) else self.MATCH_NONE
 
     def match(self, type: str, path: str) -> int:
 
         result = (x := self._match_type(type)) | (self._match_path(path) if x is self.MATCH_TYPE else self.MATCH_NONE)
 
-        if self.MATCH_NONE != ((self.MATCH_TYPE | self.MATCH_PATH) & result):
+        if 0 < ((self.MATCH_TYPE | self.MATCH_PATH) & result):
             if result == self.MATCH_TYPE and type != self.MATCH_ALL_TYPES:
                 return self.MATCH_NONE
 
@@ -87,7 +90,6 @@ class CardPropertyVoteHandler:
                     LOGGER.debug(
                         "card type [%s] ignored by rule \"%s\" (match [%s])",
                         type,
-                        path,
                         voter,
                         result_str(result)
                     )

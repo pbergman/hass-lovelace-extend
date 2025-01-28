@@ -28,8 +28,10 @@ class LovelaceWrapper(LovelaceConfig):
 
     def __init__(self, hass: HomeAssistant, inner: LovelaceConfig) -> None:
 
+        id = inner.config['url_path'].replace('-', '_') if 'id' not in inner.config else inner.config['id']
+
         self._store = Store[dict[str, Any]](
-            hass, CONFIG_STORAGE_VERSION, f"lovelace_extend.{inner.config['id']}"
+            hass, CONFIG_STORAGE_VERSION, f"lovelace_extend.{id}"
         )
 
         self._inner = inner
@@ -147,7 +149,7 @@ async def parse_card(root: Path, options: dict[str, Any], config: DashboardConfi
 
         vote = root.next(name).get_excluded()
 
-        if CardPropertyVoter.MATCH_PATH_ALL == (CardPropertyVoter.MATCH_PATH_ALL& vote):
+        if CardPropertyVoter.MATCH_PATH_ALL == (CardPropertyVoter.MATCH_PATH_ALL & vote):
             break
 
         if CardPropertyVoter.MATCH_PATH == (CardPropertyVoter.MATCH_PATH & vote):
